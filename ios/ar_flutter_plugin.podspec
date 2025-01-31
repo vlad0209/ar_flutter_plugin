@@ -20,8 +20,8 @@ A Flutter plugin for shared AR experiences supporting Android and iOS.
   s.static_framework = true
   #s.dependency 'ARCore/CloudAnchors', '~> 1.12.0'
   #s.dependency 'ARCore', '~> 1.2.0'
-  s.dependency 'ARCore/CloudAnchors', '~> 1.47.0'
-  s.dependency 'ARCore/Geospatial', '~> 1.47.0'
+  s.dependency 'ARCoreNanoPbUpdated/CloudAnchors', '~> 1.46.0.2'
+  s.dependency 'ARCoreNanoPbUpdated/Geospatial', '~> 1.46.0.2'
   s.platform = :ios, '13.0'
 
 
