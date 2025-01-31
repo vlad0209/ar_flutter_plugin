@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:ar_flutter_plugin/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin/models/ar_anchor.dart';
+import 'package:ar_flutter_plugin/models/ar_geospatial_pose.dart';
 import 'package:ar_flutter_plugin/models/ar_hittest_result.dart';
 import 'package:ar_flutter_plugin/utils/json_converters.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,9 @@ import 'package:vector_math/vector_math_64.dart';
 
 // Type definitions to enforce a consistent use of the API
 typedef ARHitResultHandler = void Function(List<ARHitTestResult> hits);
+
+typedef ARCameraGeospatialPoseHandler = void Function(
+    ARGeospatialPose cameraGeospatialPose);
 
 /// Manages the session configuration, parameters and events of an [ARView]
 class ARSessionManager {
@@ -28,6 +32,8 @@ class ARSessionManager {
 
   /// Receives hit results from user taps with tracked planes or feature points
   late ARHitResultHandler onPlaneOrPointTap;
+
+  ARCameraGeospatialPoseHandler? onCameraGeospatialPoseDetected;
 
   ARSessionManager(int id, this.buildContext, this.planeDetectionConfig,
       {this.debug = false}) {
@@ -103,6 +109,22 @@ class ARSessionManager {
     return distance;
   }
 
+  /// Enables geospatial mode for the application.
+/// 
+/// This method invokes a platform channel to enable geospatial mode.
+/// The `apiKey` parameter is **only required on iOS** and can be omitted for Android.
+/// 
+/// - [apiKey]: (Optional) The API key required for iOS devices.
+/// 
+/// Example usage:
+/// ```dart
+/// enableGeospatialMode(apiKey: 'your-ios-api-key'); // Required for iOS
+/// enableGeospatialMode(); // Works on Android without API key
+/// ```
+  void enableGeospatialMode({String? apiKey}) {
+    _channel.invokeMethod<bool>('enableGeospatialMode', <dynamic, dynamic>{'apiKey': apiKey});
+  }
+
   Future<void> _platformCallHandler(MethodCall call) {
     if (debug) {
       print('_platformCallHandler call ${call.method} ${call.arguments}');
@@ -126,6 +148,12 @@ class ARSessionManager {
               return ARHitTestResult.fromJson(e);
             }).toList();
             onPlaneOrPointTap(hitTestResults);
+          }
+          break;
+        case 'onCameraGeospatialPoseDetected':
+          if (onCameraGeospatialPoseDetected != null) {
+            final pose = ARGeospatialPose.fromMap(call.arguments);
+            onCameraGeospatialPoseDetected!(pose);
           }
           break;
         case 'dispose':
