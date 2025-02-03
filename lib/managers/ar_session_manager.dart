@@ -112,17 +112,16 @@ class ARSessionManager {
   /// Enables geospatial mode for the application.
 /// 
 /// This method invokes a platform channel to enable geospatial mode.
-/// The `apiKey` parameter is **only required on iOS** and can be omitted for Android.
 /// 
-/// - [apiKey]: (Optional) The API key required for iOS devices.
+/// - [iosApiKey]: (Optional) The API key required for iOS devices.
 /// 
 /// Example usage:
 /// ```dart
-/// enableGeospatialMode(apiKey: 'your-ios-api-key'); // Required for iOS
+/// enableGeospatialMode(iosApiKey: 'your-ios-api-key'); // Required for iOS
 /// enableGeospatialMode(); // Works on Android without API key
 /// ```
-  void enableGeospatialMode({String? apiKey}) {
-    _channel.invokeMethod<bool>('enableGeospatialMode', <dynamic, dynamic>{'apiKey': apiKey});
+  void enableGeospatialMode({String? iosApiKey}) {
+    _channel.invokeMethod<bool>('enableGeospatialMode', <dynamic, dynamic>{'apiKey': iosApiKey});
   }
 
   Future<void> _platformCallHandler(MethodCall call) {
@@ -152,7 +151,10 @@ class ARSessionManager {
           break;
         case 'onCameraGeospatialPoseDetected':
           if (onCameraGeospatialPoseDetected != null) {
-            final pose = ARGeospatialPose.fromMap(call.arguments);
+            final rawPoseDetected = call.arguments as Map<dynamic, dynamic>;
+            rawPoseDetected['eastUpSouthQuaternion'] = List<double>.from(
+                rawPoseDetected['eastUpSouthQuaternion']);
+            final pose = ARGeospatialPose.fromMap(rawPoseDetected);
             onCameraGeospatialPoseDetected!(pose);
           }
           break;

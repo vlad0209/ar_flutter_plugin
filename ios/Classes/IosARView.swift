@@ -392,7 +392,8 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     map["latitude"] = geospatialTransform?.coordinate.latitude
                     map["longitude"] = geospatialTransform?.coordinate.longitude
                     map["altitude"] = geospatialTransform?.altitude
-                    map["eastUpSouthQuaternion"] = geospatialTransform?.eastUpSouthQTarget
+                    var eastUpSouthQuaternion: [Float?] = [geospatialTransform?.eastUpSouthQTarget.imag.x, geospatialTransform?.eastUpSouthQTarget.imag.y, geospatialTransform?.eastUpSouthQTarget.imag.z, geospatialTransform?.eastUpSouthQTarget.real]
+                    map["eastUpSouthQuaternion"] = eastUpSouthQuaternion
                     map["horizontalAccuracy"] = geospatialTransform?.horizontalAccuracy
                     map["orientationYawAccuracy"] = geospatialTransform?.orientationYawAccuracy
                     map["verticalAccuracy"] = geospatialTransform?.verticalAccuracy

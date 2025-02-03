@@ -2,7 +2,7 @@ class ARGeospatialPose {
   double? latitude;
   double? longitude;
   double? altitude;
-  List<double>? eastUpSouthQuaternion;
+  List<double?>? eastUpSouthQuaternion;
   double? horizontalAccuracy;
   double? orientationYawAccuracy;
   double? verticalAccuracy;
