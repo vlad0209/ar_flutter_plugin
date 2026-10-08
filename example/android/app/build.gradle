@@ -59,6 +59,7 @@ flutter {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.google.android.gms:play-services-auth:16+'
 }
 
 apply plugin: 'com.google.gms.google-services'

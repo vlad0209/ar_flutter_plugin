@@ -12,10 +12,10 @@ import 'package:ar_flutter_plugin/datatypes/node_types.dart';
 import 'package:ar_flutter_plugin/datatypes/hittest_result_types.dart';
 import 'package:ar_flutter_plugin/models/ar_node.dart';
 import 'package:ar_flutter_plugin/models/ar_hittest_result.dart';
+import 'package:geoflutterfire_plus/geoflutterfire_plus.dart';
 import 'package:vector_math/vector_math_64.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:geolocator/geolocator.dart';
 
 class CloudAnchorWidget extends StatefulWidget {
@@ -157,8 +157,8 @@ class _CloudAnchorWidgetState extends State<CloudAnchorWidget> {
     this.arAnchorManager!.onAnchorDownloaded = onAnchorDownloaded;
 
     this
-        .arLocationManager
-        !.startLocationUpdates()
+        .arLocationManager!
+        .startLocationUpdates()
         .then((value) => null)
         .onError((error, stackTrace) {
       switch (error.toString()) {
@@ -245,13 +245,15 @@ class _CloudAnchorWidgetState extends State<CloudAnchorWidget> {
         // Add note to anchor
         var newNode = ARNode(
             type: NodeType.webGLB,
-            uri: "https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF-Binary/Duck.glb",
+            uri:
+                "https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF-Binary/Duck.glb",
             scale: Vector3(0.2, 0.2, 0.2),
             position: Vector3(0.0, 0.0, 0.0),
             rotation: Vector4(1.0, 0.0, 0.0, 0.0),
             data: {"onTapText": "Ouch, that hurt!"});
-        bool? didAddNodeToAnchor =
-            await this.arObjectManager!.addNode(newNode, planeAnchor: newAnchor);
+        bool? didAddNodeToAnchor = await this
+            .arObjectManager!
+            .addNode(newNode, planeAnchor: newAnchor);
         if (didAddNodeToAnchor ?? false) {
           this.nodes.add(newNode);
           setState(() {
@@ -289,15 +291,18 @@ class _CloudAnchorWidgetState extends State<CloudAnchorWidget> {
     this.arSessionManager!.onError("Upload successful");
   }
 
-  ARAnchor onAnchorDownloaded(Map<String, dynamic>serializedAnchor) {
-    final anchor = ARPlaneAnchor.fromJson(anchorsInDownloadProgress[serializedAnchor["cloudanchorid"]] as Map<String, dynamic>);
+  ARAnchor onAnchorDownloaded(Map<String, dynamic> serializedAnchor) {
+    final anchor = ARPlaneAnchor.fromJson(
+        anchorsInDownloadProgress[serializedAnchor["cloudanchorid"]]
+            as Map<String, dynamic>);
     anchorsInDownloadProgress.remove(anchor.cloudanchorid);
     this.anchors.add(anchor);
 
     // Download nodes attached to this anchor
     firebaseManager.getObjectsFromAnchor(anchor, (snapshot) {
       snapshot.docs.forEach((objectDoc) {
-        ARNode object = ARNode.fromMap(objectDoc.data() as Map<String, dynamic>);
+        ARNode object =
+            ARNode.fromMap(objectDoc.data() as Map<String, dynamic>);
         arObjectManager!.addNode(object, planeAnchor: anchor);
         this.nodes.add(object);
       });
@@ -318,7 +323,8 @@ class _CloudAnchorWidgetState extends State<CloudAnchorWidget> {
     if (this.arLocationManager!.currentLocation != null) {
       firebaseManager.downloadAnchorsByLocation((snapshot) {
         final cloudAnchorId = snapshot.get("cloudanchorid");
-        anchorsInDownloadProgress[cloudAnchorId] = snapshot.data() as Map<String, dynamic>;
+        anchorsInDownloadProgress[cloudAnchorId] =
+            snapshot.data() as Map<String, dynamic>;
         arAnchorManager!.downloadAnchor(cloudAnchorId);
       }, this.arLocationManager!.currentLocation, 0.1);
       setState(() {
@@ -375,16 +381,14 @@ typedef FirebaseDocumentStreamListener = void Function(
 
 class FirebaseManager {
   FirebaseFirestore? firestore;
-  Geoflutterfire? geo;
-  CollectionReference? anchorCollection;
-  CollectionReference? objectCollection;
+  CollectionReference<Map<String, dynamic>>? anchorCollection;
+  CollectionReference<Map<String, dynamic>>? objectCollection;
 
   // Firebase initialization function
   Future<bool> initializeFlutterFire() async {
     try {
       // Wait for Firebase to initialize
       await Firebase.initializeApp();
-      geo = Geoflutterfire();
       firestore = FirebaseFirestore.instance;
       anchorCollection = FirebaseFirestore.instance.collection('anchors');
       objectCollection = FirebaseFirestore.instance.collection('objects');
@@ -403,9 +407,8 @@ class FirebaseManager {
     serializedAnchor["expirationTime"] = expirationTime;
     // Add location
     if (currentLocation != null) {
-      GeoFirePoint myLocation = geo!.point(
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude);
+      GeoFirePoint myLocation = GeoFirePoint(
+          GeoPoint(currentLocation.latitude, currentLocation.longitude));
       serializedAnchor["position"] = myLocation.data;
     }
 
@@ -441,11 +444,18 @@ class FirebaseManager {
   void downloadAnchorsByLocation(FirebaseDocumentStreamListener listener,
       Position location, double radius) {
     GeoFirePoint center =
-        geo!.point(latitude: location.latitude, longitude: location.longitude);
+        GeoFirePoint(GeoPoint(location.latitude, location.longitude));
 
-    Stream<List<DocumentSnapshot>> stream = geo!
-        .collection(collectionRef: anchorCollection!)
-        .within(center: center, radius: radius, field: 'position');
+    GeoPoint geopointFrom(Map<String, dynamic> data) =>
+        (data['geo'] as Map<String, dynamic>)['position'] as GeoPoint;
+
+    Stream<List<DocumentSnapshot>> stream =
+        GeoCollectionReference<Map<String, dynamic>>(anchorCollection!)
+            .subscribeWithin(
+                center: center,
+                radiusInKm: radius,
+                field: 'position',
+                geopointFrom: geopointFrom);
 
     stream.listen((List<DocumentSnapshot> documentList) {
       documentList.forEach((element) {
